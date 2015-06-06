@@ -1,6 +1,6 @@
 {
   "name": "bunyan-cloudwatch",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "bunyan stream to write to AWS CloudWatch logs",
   "main": "index.js",
   "scripts": {
