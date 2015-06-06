@@ -4,7 +4,8 @@
   "description": "bunyan stream to write to AWS CloudWatch logs",
   "main": "index.js",
   "scripts": {
-    "test": "mocha"
+    "test": "mocha test/index",
+    "e2e-test": "mocha -t 10000 test/e2e"
   },
   "keywords": [
     "aws",
@@ -21,6 +22,7 @@
     "bunyan": "^1.3.6",
     "mocha": "^2.2.5",
     "proxyquire": "^1.5.0",
-    "sinon": "^1.14.1"
+    "sinon": "^1.14.1",
+    "uuid": "^2.0.1"
   }
 }

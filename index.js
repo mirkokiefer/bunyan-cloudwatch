@@ -18,7 +18,7 @@ function CloudWatchStream(opts) {
 
   this.cloudwatch = new AWS.CloudWatchLogs();
   this.queuedLogs = [];
-  this.sequenceToken = undefined;
+  this.sequenceToken = null;
   this.writeQueued = false;
 }
 
@@ -32,6 +32,9 @@ CloudWatchStream.prototype._write = function (record, _enc, cb) {
 }
 
 CloudWatchStream.prototype._writeLogs = function () {
+  if (this.sequenceToken === null) {
+    return this._getSequenceToken(this._writeLogs.bind(this));
+  }
   var log = {
     logGroupName: this.logGroupName,
     logStreamName: this.logStreamName,
@@ -43,24 +46,46 @@ CloudWatchStream.prototype._writeLogs = function () {
   var obj = this;
   this.cloudwatch.putLogEvents(log, function (err, res) {
     if (err) {
-      if (obj.onError) {
-        return obj.onError(err);
-      }
+      if (obj.onError) return obj.onError(err);
       throw err;
     }
     obj.sequenceToken = res.nextSequenceToken;
   });
 }
 
+CloudWatchStream.prototype._getSequenceToken = function (done) {
+  var params = {
+    logGroupName: this.logGroupName,
+    logStreamNamePrefix: this.logStreamName
+  };
+  var obj = this;
+  this.cloudwatch.describeLogStreams(params, function(err, data) {
+    if (err) {
+      return this._error(err);
+    }
+    if (data.logStreams.length == 0) {
+      return this._error(new Error('logStreamName not found'));
+    }
+    obj.sequenceToken = data.logStreams[0].uploadSequenceToken;
+    done();
+  });
+}
+
+CloudWatchStream.prototype._error = function (err) {
+  if (obj.onError) return obj.onError(err);
+  throw err;
+}
+
 function createCWLog(bunyanLog) {
+  var message = {};
+  for (var key in bunyanLog) {
+    if (key === 'time') continue;
+    message[key] = bunyanLog[key];
+  }
   var log = {
-    message: bunyanLog.msg,
+    message: JSON.stringify(message),
     timestamp: new Date(bunyanLog.time).getTime()
   };
-  for (var key in bunyanLog) {
-    if (key === 'msg') continue;
-    if (key === 'time') continue;
-    log[key] = bunyanLog[key];
-  }
   return log;
 }
+

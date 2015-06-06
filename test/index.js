@@ -38,12 +38,14 @@ describe('bunyan-cloudwatch', function () {
       assert.equal(params.logEvents.length, 2);
 
       var event1 = params.logEvents[0];
-      assert.equal(event1.message, 'test log 1');
-      assert.equal(event1.foo, 'bar');
+      var message1 = JSON.parse(event1.message);
+      assert.equal(message1.msg, 'test log 1');
+      assert.equal(message1.foo, 'bar');
       assert.ok(event1.timestamp);
 
       var event2 = params.logEvents[1];
-      assert.equal(event2.message, 'test log 2');
+      var message2 = JSON.parse(event2.message);
+      assert.equal(message2.msg, 'test log 2');
 
       done();
     }
@@ -136,6 +138,16 @@ function createAWSStub(onLog) {
   CloudWatchLogsStub.prototype.putLogEvents = function (params, cb) {
     obj.onLog(params);
     cb(null, {nextSequenceToken: 'magic-token'});
+  }
+
+  CloudWatchLogsStub.prototype.describeLogStreams = function (params, cb) {
+    cb(null, {
+      logStreams: [
+        {
+          uploadSequenceToken: undefined
+        }
+      ]
+    });
   }
 
   return obj;
