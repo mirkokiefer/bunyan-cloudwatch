@@ -1,6 +1,8 @@
 #bunyan-cloudwatch
 
-Stream to write [bunyan](https://github.com/trentm/node-bunyan) logs to cloudwatch.
+Stream to write [bunyan](https://github.com/trentm/node-bunyan) logs to [AWS CloudWatch](http://aws.amazon.com/cloudwatch/).
+
+This is actually a plain [Node.js Writable](https://nodejs.org/api/stream.html#stream_class_stream_writable) object stream so could be used without bunyan.
 
 ##Usage
 
