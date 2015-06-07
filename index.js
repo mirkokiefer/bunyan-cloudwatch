@@ -15,6 +15,7 @@ function CloudWatchStream(opts) {
   this.logGroupName = opts.logGroupName;
   this.logStreamName = opts.logStreamName;
   this.writeInterval = opts.writeInterval || 0;
+  AWS.config.update({region: opts.region});
 
   this.cloudwatch = new AWS.CloudWatchLogs();
   this.queuedLogs = [];
@@ -45,10 +46,7 @@ CloudWatchStream.prototype._writeLogs = function () {
   this.writeQueued = false;
   var obj = this;
   this.cloudwatch.putLogEvents(log, function (err, res) {
-    if (err) {
-      if (obj.onError) return obj.onError(err);
-      throw err;
-    }
+    if (err) return obj._error(err);
     obj.sequenceToken = res.nextSequenceToken;
   });
 }
@@ -61,19 +59,46 @@ CloudWatchStream.prototype._getSequenceToken = function (done) {
   var obj = this;
   this.cloudwatch.describeLogStreams(params, function(err, data) {
     if (err) {
-      return this._error(err);
+      if (err.name === 'ResourceNotFoundException') {
+        createLogGroupAndStream(obj.cloudwatch, obj.logGroupName, obj.logStreamName, createStreamCb);
+        return;
+      }
+      return obj._error(err);
     }
     if (data.logStreams.length == 0) {
-      return this._error(new Error('logStreamName not found'));
+      createLogStream(obj.cloudwatch, obj.logGroupName, obj.logStreamName, createStreamCb);
+      return;
     }
     obj.sequenceToken = data.logStreams[0].uploadSequenceToken;
     done();
   });
+
+  function createStreamCb(err, res) {
+    if (err) return obj._error(err);
+    // call again to verify stream was created - silently fails sometimes!
+    obj._getSequenceToken(done);
+  }
 }
 
 CloudWatchStream.prototype._error = function (err) {
-  if (obj.onError) return obj.onError(err);
+  if (this.onError) return this.onError(err);
   throw err;
+}
+
+function createLogGroupAndStream(cloudwatch, logGroupName, logStreamName, cb) {
+  cloudwatch.createLogGroup({
+    logGroupName: logGroupName
+  }, function (err) {
+    if (err) return err;
+    createLogStream(cloudwatch, logGroupName, logStreamName, cb);
+  });
+}
+
+function createLogStream(cloudwatch, logGroupName, logStreamName, cb) {
+  cloudwatch.createLogStream({
+    logGroupName: logGroupName,
+    logStreamName: logStreamName
+  }, cb);
 }
 
 function createCWLog(bunyanLog) {
@@ -89,3 +114,10 @@ function createCWLog(bunyanLog) {
   return log;
 }
 
+
+function BunyanCWError(message) {
+  this.name = 'BunyanCWError';
+  this.message = message || 'error in bunyan-cloudwatch';
+}
+BunyanCWError.prototype = Object.create(Error.prototype);
+BunyanCWError.prototype.constructor = BunyanCWError;

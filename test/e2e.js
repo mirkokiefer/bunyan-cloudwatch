@@ -11,7 +11,8 @@ var logStreamName = 'test-stream-' + uuid.v4();
 
 var cwStream = createCWStream({
   logGroupName: logGroupName,
-  logStreamName: logStreamName
+  logStreamName: logStreamName,
+  region: 'us-west-1'
 });
 var log = bunyan.createLogger({
   name: 'foo',
@@ -24,17 +25,6 @@ var log = bunyan.createLogger({
 });
 
 describe('bunyan-cloudwatch e2e', function () {
-  before(function (done) {
-    cloudwatch.createLogGroup({
-      logGroupName: logGroupName
-    }, done);
-  });
-  before(function (done) {
-    cloudwatch.createLogStream({
-      logGroupName: logGroupName,
-      logStreamName: logStreamName
-    }, done);
-  });
 
   after(function (done) {
     cloudwatch.deleteLogGroup({
@@ -62,7 +52,7 @@ function readLogEventsUntilFound(count, done) {
     logStreamName: logStreamName
   };
   cloudwatch.getLogEvents(params, function(err, data) {
-    if (err) throw err;
+    if (err) return readLogEventsUntilFound(count, done);
     if (data.events.length === count) return done();
     readLogEventsUntilFound(count, done);
   });

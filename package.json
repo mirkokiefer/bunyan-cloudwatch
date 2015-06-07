@@ -1,13 +1,13 @@
 {
   "name": "bunyan-cloudwatch",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "Writable stream to write bunyan logs to AWS CloudWatch",
   "homepage": "https://github.com/mirkokiefer/bunyan-cloudwatch",
   "repository": "git://github.com/mirkokiefer/bunyan-cloudwatch.git",
   "main": "index.js",
   "scripts": {
     "test": "mocha test/index",
-    "e2e-test": "mocha -t 10000 test/e2e"
+    "e2e-test": "mocha -t 60000 test/e2e"
   },
   "keywords": [
     "aws",

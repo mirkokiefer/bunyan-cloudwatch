@@ -7,26 +7,31 @@ var sinon = require('sinon');
 var logGroupName = 'test-group';
 var logStreamName = 'test-stream';
 
-var awsStub = createAWSStub();
-var createCWStream = proxyquire('../', {
-  'aws-sdk': awsStub
-});
-
-var cwStream = createCWStream({
-  logGroupName: logGroupName,
-  logStreamName: logStreamName
-});
-var log = bunyan.createLogger({
-  name: 'foo',
-  streams: [
-    {
-      stream: cwStream,
-      type: 'raw'
-    }
-  ]
-});
-
 describe('bunyan-cloudwatch', function () {
+  var awsStub;
+  var cwStream;
+  var log;
+  beforeEach(function setup() {
+    awsStub = createAWSStub();
+    var createCWStream = proxyquire('../', {
+      'aws-sdk': awsStub
+    });
+
+    cwStream = createCWStream({
+      logGroupName: logGroupName,
+      logStreamName: logStreamName
+    });
+    log = bunyan.createLogger({
+      name: 'foo',
+      streams: [
+        {
+          stream: cwStream,
+          type: 'raw'
+        }
+      ]
+    });
+  });
+
   it('should write logs to CloudWatch', function (done) {
     awsStub.onLog = onLog;
     log.info({foo: 'bar'}, 'test log 1');
@@ -94,7 +99,6 @@ describe('bunyan-cloudwatch', function () {
   });
 
   it('should use the sequenceToken returned by CloudWatch', function (done) {
-    cwStream.writeInterval = 0;
     cwStream.sequenceToken = undefined;
     awsStub.onLog = onLog;
     var i = 0;
@@ -116,10 +120,66 @@ describe('bunyan-cloudwatch', function () {
       cb(new Error('aws error'));
     }
     cwStream.onError = onError;
+
     log.info({foo: 'bar'}, 'test log 1');
 
     function onError(err) {
       assert.ok(err);
+      done();
+    }
+  });
+
+  it('should create log stream if necessary', function (done) {
+    cwStream.cloudwatch.describeLogStreams = function (params, cb) {
+      cb(null, {logStreams: []});
+    }
+    cwStream.cloudwatch.createLogStream = createLogStreamStub;
+    awsStub.onLog = onLog;
+    var created = false;
+
+    log.info({foo: 'bar'}, 'test log 1');
+
+    function createLogStreamStub(params, cb) {
+      created = true;
+      cwStream.cloudwatch.describeLogStreams = describeLogStreamsStubDefault;
+      cb();
+    }
+
+    function onLog(params) {
+      assert.equal(created, true);
+      assert.equal(params.sequenceToken, undefined);
+      done();
+    }
+  });
+
+  it('should create log group and stream if necessary', function (done) {
+    cwStream.sequenceToken = null;
+    cwStream.cloudwatch.describeLogStreams = function (params, cb) {
+      var err = new Error();
+      err.name = 'ResourceNotFoundException';
+      cb(err);
+    }
+    cwStream.cloudwatch.createLogGroup = createLogGroupStub;
+    cwStream.cloudwatch.createLogStream = createLogStreamStub;
+    awsStub.onLog = onLog;
+    var events = [];
+
+    log.info({foo: 'bar'}, 'test log 1');
+
+    function createLogGroupStub(params, cb) {
+      events.push('create_group');
+      cb();
+    }
+
+    function createLogStreamStub(params, cb) {
+      events.push('create_stream');
+      cwStream.cloudwatch.describeLogStreams = describeLogStreamsStubDefault;
+      cb();
+    }
+
+    function onLog(params) {
+      assert.deepEqual(events, ['create_group', 'create_stream']);
+      assert.equal(params.sequenceToken, undefined);
       done();
     }
   });
@@ -140,15 +200,17 @@ function createAWSStub(onLog) {
     cb(null, {nextSequenceToken: 'magic-token'});
   }
 
-  CloudWatchLogsStub.prototype.describeLogStreams = function (params, cb) {
-    cb(null, {
-      logStreams: [
-        {
-          uploadSequenceToken: undefined
-        }
-      ]
-    });
-  }
+  CloudWatchLogsStub.prototype.describeLogStreams = describeLogStreamsStubDefault
 
   return obj;
+}
+
+function describeLogStreamsStubDefault(params, cb) {
+  cb(null, {
+    logStreams: [
+      {
+        uploadSequenceToken: undefined
+      }
+    ]
+  });
 }
