@@ -26,8 +26,8 @@ function CloudWatchStream(opts) {
 CloudWatchStream.prototype._write = function (record, _enc, cb) {
   this.queuedLogs.push(record);
   if (!this.writeQueued) {
-    setTimeout(this._writeLogs.bind(this), this.writeInterval);
     this.writeQueued = true;
+    setTimeout(this._writeLogs.bind(this), this.writeInterval);
   }
   cb();
 }
@@ -43,11 +43,16 @@ CloudWatchStream.prototype._writeLogs = function () {
     logEvents: this.queuedLogs.map(createCWLog)
   };
   this.queuedLogs = [];
-  this.writeQueued = false;
   var obj = this;
   this.cloudwatch.putLogEvents(log, function (err, res) {
-    if (err) return obj._error(err);
+    if (err) {
+      return obj._error(err);
+    }
     obj.sequenceToken = res.nextSequenceToken;
+    if (obj.queuedLogs.length) {
+      return obj._writeLogs();
+    }
+    obj.writeQueued = false;
   });
 }
 

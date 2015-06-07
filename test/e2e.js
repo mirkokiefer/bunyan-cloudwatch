@@ -43,7 +43,8 @@ describe('bunyan-cloudwatch e2e', function () {
     log.info({foo: 'bar'}, 'test log 3');
     log.info({foo: 'bar'}, 'test log 4');
     readLogEventsUntilFound(4, done);
-  })
+  });
+
 });
 
 function readLogEventsUntilFound(count, done) {
