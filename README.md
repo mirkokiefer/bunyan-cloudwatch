@@ -1,4 +1,4 @@
-#bunyan-cloudwatch
+#bunyan-cloudwatch [![Build Status](https://secure.travis-ci.org/mirkokiefer/bunyan-cloudwatch.svg)](http://travis-ci.org/mirkokiefer/bunyan-cloudwatch)
 
 Stream to write [bunyan](https://github.com/trentm/node-bunyan) logs to [AWS CloudWatch](http://aws.amazon.com/cloudwatch/).
 
