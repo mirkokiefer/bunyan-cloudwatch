@@ -114,6 +114,39 @@ describe('bunyan-cloudwatch', function () {
       if (i++ == 1) done();
     }
   });
+  
+  it("should retry with error: InvalidSequenceTokenException", function(done){
+    cwStream.sequenceToken = undefined;
+    awsStub.onRes = onRes;
+    var i = 0;
+
+    log.info({foo: 'bar'}, 'test log 1');
+
+    setTimeout(function () {
+      cwStream.sequenceToken = 'not-correct';
+      log.info({foo: 'bar'}, 'test log 2');
+    }, 0);
+
+    function onRes(err, res) {
+      
+      // console.log("res:", i, err || null, res || null);
+      if(i == 0){
+        assert.ok(res);
+      }
+      
+      if(i == 1){
+        assert.equal(err.code, "InvalidSequenceTokenException");
+      }
+      
+      if(i == 2){
+        assert.ok(res);
+      }
+      
+      if(i++ == 2){
+        done();
+      }
+    }
+  });
 
   it('should forward errors from CloudWatch', function (done) {
     cwStream.cloudwatch.putLogEvents = function (params, cb) {
@@ -191,13 +224,35 @@ function createAWSStub(onLog) {
   }
 
   function CloudWatchLogsStub() {
-
+    this.callCount = 0;
   }
 
   // docs: http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/CloudWatchLogs.html#putLogEvents-property
   CloudWatchLogsStub.prototype.putLogEvents = function (params, cb) {
-    obj.onLog(params);
-    cb(null, {nextSequenceToken: 'magic-token'});
+    if(typeof obj.onLog !== "undefined"){
+      obj.onLog(params);
+    }
+    
+    var err = null;
+    var res = null;
+    
+    this.callCount++;
+    if(this.callCount > 1 && params.sequenceToken != 'magic-token'){
+      err = { 
+        message: 'The given sequenceToken is invalid. The next expected sequenceToken is: magic-token',
+        code: 'InvalidSequenceTokenException',
+        statusCode: 400,
+        retryable: false,
+        retryDelay: 30 
+      };
+    }else{
+      res = {nextSequenceToken: 'magic-token'};
+    }
+    
+    if(typeof obj.onRes !== "undefined") {
+      obj.onRes(err, res);
+    }
+    cb(err, res);
   }
 
   CloudWatchLogsStub.prototype.describeLogStreams = describeLogStreamsStubDefault

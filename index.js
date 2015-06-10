@@ -46,7 +46,22 @@ CloudWatchStream.prototype._writeLogs = function () {
   var obj = this;
   this.cloudwatch.putLogEvents(log, function (err, res) {
     if (err) {
-      return obj._error(err);
+      
+      log.sequenceToken = err.message.split(": ")[1];
+      if(err.code == "InvalidSequenceTokenException"){
+        obj.cloudwatch.putLogEvents(log, function (err, res) {
+          if (err) {
+              return obj._error(err);
+          }
+          obj.sequenceToken = res.nextSequenceToken;
+          if (obj.queuedLogs.length) {
+            return obj._writeLogs();
+          }
+          obj.writeQueued = false;
+        });
+      }else{
+        return obj._error(err);
+      }
     }
     obj.sequenceToken = res.nextSequenceToken;
     if (obj.queuedLogs.length) {
