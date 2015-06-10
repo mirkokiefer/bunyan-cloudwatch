@@ -62,12 +62,13 @@ CloudWatchStream.prototype._writeLogs = function () {
       }else{
         return obj._error(err);
       }
+    }else{
+      obj.sequenceToken = res.nextSequenceToken;
+      if (obj.queuedLogs.length) {
+        return obj._writeLogs();
+      }
+      obj.writeQueued = false;
     }
-    obj.sequenceToken = res.nextSequenceToken;
-    if (obj.queuedLogs.length) {
-      return obj._writeLogs();
-    }
-    obj.writeQueued = false;
   });
 }
 
