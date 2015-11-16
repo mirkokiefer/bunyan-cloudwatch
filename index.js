@@ -17,7 +17,7 @@ function CloudWatchStream(opts) {
   this.writeInterval = opts.writeInterval || 0;
   AWS.config.update({region: opts.region});
 
-  this.cloudwatch = new AWS.CloudWatchLogs();
+  this.cloudwatch = new AWS.CloudWatchLogs(opts.credentials || null);
   this.queuedLogs = [];
   this.sequenceToken = null;
   this.writeQueued = false;
