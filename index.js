@@ -17,7 +17,7 @@ function CloudWatchStream(opts) {
   this.writeInterval = opts.writeInterval || 0;
   AWS.config.update({region: opts.region});
 
-  this.cloudwatch = new AWS.CloudWatchLogs();
+  this.cloudwatch = new AWS.CloudWatchLogs(opts.credentials || null);
   this.queuedLogs = [];
   this.sequenceToken = null;
   this.writeQueued = false;
@@ -46,13 +46,29 @@ CloudWatchStream.prototype._writeLogs = function () {
   var obj = this;
   this.cloudwatch.putLogEvents(log, function (err, res) {
     if (err) {
-      return obj._error(err);
+      
+      log.sequenceToken = err.message.split(": ")[1];
+      if(err.code == "InvalidSequenceTokenException"){
+        obj.cloudwatch.putLogEvents(log, function (err, res) {
+          if (err) {
+              return obj._error(err);
+          }
+          obj.sequenceToken = res.nextSequenceToken;
+          if (obj.queuedLogs.length) {
+            return obj._writeLogs();
+          }
+          obj.writeQueued = false;
+        });
+      }else{
+        return obj._error(err);
+      }
+    }else{
+      obj.sequenceToken = res.nextSequenceToken;
+      if (obj.queuedLogs.length) {
+        return obj._writeLogs();
+      }
+      obj.writeQueued = false;
     }
-    obj.sequenceToken = res.nextSequenceToken;
-    if (obj.queuedLogs.length) {
-      return obj._writeLogs();
-    }
-    obj.writeQueued = false;
   });
 }
 
