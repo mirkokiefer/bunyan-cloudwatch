@@ -98,6 +98,60 @@ describe('bunyan-cloudwatch', function () {
     }
   });
 
+  it('should write logs queued during write', function (done) {
+    cwStream.writeInterval = 50;
+    awsStub.onLog = onLog;
+    var i = 0;
+
+    log.info({foo: 'bar'}, 'test log 1');
+    log.info({foo: 'bar'}, 'test log 2');
+
+    setTimeout(function () {
+      log.info({foo: 'bar'}, 'test log 3');
+      log.info({foo: 'bar'}, 'test log 4');
+    }, 20);
+
+    setTimeout(function () {
+      log.info({foo: 'bar'}, 'test log 5');
+      log.info({foo: 'bar'}, 'test log 6');
+    }, 60);
+
+    var t;
+    function onLog(params, cb) {
+      assert.equal(params.logEvents.length, i == 0 ? 4 : 2);
+      if (i++ == 1) {
+        assert.equal(Date.now() - t >= 70, true)
+        done();
+      } else {
+        t = Date.now()
+      }
+      setTimeout(function () {
+        cb(null, {nextSequenceToken: 'magic-token'});
+      }, 20)
+    }
+  });
+
+  it('should retry retryable errors', function (done) {
+    cwStream.writeInterval = 50;
+    awsStub.onLog = onLog;
+    var i = 0;
+
+    log.info({foo: 'bar'}, 'test log 1');
+
+    var t;
+    function onLog(params, cb) {
+      assert.equal(params.logEvents.length, 1)
+      assert.equal(JSON.parse(params.logEvents[0].message).msg, 'test log 1')
+      if (i++ == 0) {
+        t = Date.now()
+        return cb({retryable: true})
+      }
+      assert.equal(Date.now() - t >= 50, true)
+      cb(null, {nextSequenceToken: 'magic-token'})
+      done()
+    }
+  });
+
   it('should use the sequenceToken returned by CloudWatch', function (done) {
     cwStream.sequenceToken = undefined;
     awsStub.onLog = onLog;
@@ -196,8 +250,8 @@ function createAWSStub(onLog) {
 
   // docs: http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/CloudWatchLogs.html#putLogEvents-property
   CloudWatchLogsStub.prototype.putLogEvents = function (params, cb) {
-    obj.onLog(params);
-    cb(null, {nextSequenceToken: 'magic-token'});
+    obj.onLog(params, cb);
+    if (obj.onLog.length < 2) cb(null, {nextSequenceToken: 'magic-token'});
   }
 
   CloudWatchLogsStub.prototype.describeLogStreams = describeLogStreamsStubDefault

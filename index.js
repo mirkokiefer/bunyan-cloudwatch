@@ -44,16 +44,21 @@ CloudWatchStream.prototype._writeLogs = function () {
   };
   this.queuedLogs = [];
   var obj = this;
-  this.cloudwatch.putLogEvents(log, function (err, res) {
-    if (err) {
-      return obj._error(err);
-    }
-    obj.sequenceToken = res.nextSequenceToken;
-    if (obj.queuedLogs.length) {
-      return obj._writeLogs();
-    }
-    obj.writeQueued = false;
-  });
+  writeLog();
+
+  function writeLog () {
+    obj.cloudwatch.putLogEvents(log, function (err, res) {
+      if (err) {
+        if (err.retryable) return setTimeout(writeLog, obj.writeInterval);
+        return obj._error(err);
+      }
+      obj.sequenceToken = res.nextSequenceToken;
+      if (obj.queuedLogs.length) {
+        return setTimeout(obj._writeLogs.bind(obj), obj.writeInterval);
+      }
+      obj.writeQueued = false;
+    });
+  }
 }
 
 CloudWatchStream.prototype._getSequenceToken = function (done) {
