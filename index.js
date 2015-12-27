@@ -15,7 +15,17 @@ function CloudWatchStream(opts) {
   this.logGroupName = opts.logGroupName;
   this.logStreamName = opts.logStreamName;
   this.writeInterval = opts.writeInterval || 0;
-  AWS.config.update({region: opts.region});
+
+  var config = {
+    region: opts.region,
+    // Allow passing AWS credentials as explicit values instead of always relying on env vars
+    credentials: {
+      accessKeyId: opts.accessKeyId || process.env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: opts.secretAccessKey || process.env.AWS_SECRET_ACCESS_KEY
+    }
+  }
+
+  AWS.config.update(config);
 
   this.cloudwatch = new AWS.CloudWatchLogs(opts.cloudWatchLogsOptions);
   this.queuedLogs = [];
