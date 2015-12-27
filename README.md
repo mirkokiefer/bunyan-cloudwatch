@@ -13,7 +13,9 @@ var createCWStream = require('bunyan-cloudwatch');
 var stream = bunyanCW({
   logGroupName: 'my-group',
   logStreamName: 'my-stream',
-  region: 'us-west-1'
+  cloudWatchLogsOptions: {
+    region: 'us-west-1'
+  }
 });
 
 var log = bunyan.createLogger({
@@ -34,12 +36,12 @@ With `opts` of:
 
 - `logGroupName` (required)
 - `logStreamName` (required)
-- `region` (required): the AWS region e.g. `us-west-1`
 - `cloudWatchLogsOptions` (optional): options passed to the [`AWS.CloudWatchLogs`](http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/CloudWatchLogs.html#constructor-property) constructor
 
 On write of the first log, the module creates the logGroup and logStream if necessary.
 
 We use the aws-sdk to write the logs - the AWS credentials have therefore to be configured using environment variables (`AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`).
+
 
 - [Configuring the aws-sdk](http://docs.aws.amazon.com/AWSJavaScriptSDK/guide/node-configuring.html)
 - [`CloudWatchLogs.putLogEvents`](http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/CloudWatchLogs.html#putLogEvents-property) is the method we use to write logs
