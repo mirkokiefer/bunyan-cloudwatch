@@ -2,7 +2,6 @@
 var assert = require('assert');
 var bunyan = require('bunyan');
 var proxyquire = require('proxyquire');
-var sinon = require('sinon');
 
 var logGroupName = 'test-group';
 var logStreamName = 'test-stream';
@@ -70,7 +69,7 @@ describe('bunyan-cloudwatch', function () {
 
     function onLog(params) {
       assert.equal(params.logEvents.length, 2);
-      if (i++ == 1) done();
+      if (i++ === 1) done();
     }
   });
 
@@ -93,8 +92,8 @@ describe('bunyan-cloudwatch', function () {
     }, 60);
 
     function onLog(params) {
-      assert.equal(params.logEvents.length, i == 0 ? 4 : 2);
-      if (i++ == 1) done();
+      assert.equal(params.logEvents.length, i === 0 ? 4 : 2);
+      if (i++ === 1) done();
     }
   });
 
@@ -118,16 +117,16 @@ describe('bunyan-cloudwatch', function () {
 
     var t;
     function onLog(params, cb) {
-      assert.equal(params.logEvents.length, i == 0 ? 4 : 2);
-      if (i++ == 1) {
-        assert.equal(Date.now() - t >= 70, true)
+      assert.equal(params.logEvents.length, i === 0 ? 4 : 2);
+      if (i++ === 1) {
+        assert.equal(Date.now() - t >= 70, true);
         done();
       } else {
-        t = Date.now()
+        t = Date.now();
       }
       setTimeout(function () {
         cb(null, {nextSequenceToken: 'magic-token'});
-      }, 20)
+      }, 20);
     }
   });
 
@@ -140,15 +139,15 @@ describe('bunyan-cloudwatch', function () {
 
     var t;
     function onLog(params, cb) {
-      assert.equal(params.logEvents.length, 1)
-      assert.equal(JSON.parse(params.logEvents[0].message).msg, 'test log 1')
-      if (i++ == 0) {
-        t = Date.now()
-        return cb({retryable: true})
+      assert.equal(params.logEvents.length, 1);
+      assert.equal(JSON.parse(params.logEvents[0].message).msg, 'test log 1');
+      if (i++ === 0) {
+        t = Date.now();
+        return cb({retryable: true});
       }
-      assert.equal(Date.now() - t >= 50, true)
-      cb(null, {nextSequenceToken: 'magic-token'})
-      done()
+      assert.equal(Date.now() - t >= 50, true);
+      cb(null, {nextSequenceToken: 'magic-token'});
+      done();
     }
   });
 
@@ -164,15 +163,15 @@ describe('bunyan-cloudwatch', function () {
     }, 0);
 
     function onLog(params) {
-      assert.equal(params.sequenceToken, i == 0 ? undefined : 'magic-token');
-      if (i++ == 1) done();
+      assert.equal(params.sequenceToken, i === 0 ? undefined : 'magic-token');
+      if (i++ === 1) done();
     }
   });
 
   it('should forward errors from CloudWatch', function (done) {
     cwStream.cloudwatch.putLogEvents = function (params, cb) {
       cb(new Error('aws error'));
-    }
+    };
     cwStream.onError = onError;
 
     log.info({foo: 'bar'}, 'test log 1');
@@ -186,7 +185,7 @@ describe('bunyan-cloudwatch', function () {
   it('should create log stream if necessary', function (done) {
     cwStream.cloudwatch.describeLogStreams = function (params, cb) {
       cb(null, {logStreams: []});
-    }
+    };
     cwStream.cloudwatch.createLogStream = createLogStreamStub;
     awsStub.onLog = onLog;
     var created = false;
@@ -212,7 +211,7 @@ describe('bunyan-cloudwatch', function () {
       var err = new Error();
       err.name = 'ResourceNotFoundException';
       cb(err);
-    }
+    };
     cwStream.cloudwatch.createLogGroup = createLogGroupStub;
     cwStream.cloudwatch.createLogStream = createLogStreamStub;
     awsStub.onLog = onLog;
@@ -237,12 +236,12 @@ describe('bunyan-cloudwatch', function () {
       done();
     }
   });
-})
+});
 
-function createAWSStub(onLog) {
+function createAWSStub() {
   var obj = {
     CloudWatchLogs: CloudWatchLogsStub
-  }
+  };
 
   function CloudWatchLogsStub() {
 
@@ -252,9 +251,9 @@ function createAWSStub(onLog) {
   CloudWatchLogsStub.prototype.putLogEvents = function (params, cb) {
     obj.onLog(params, cb);
     if (obj.onLog.length < 2) cb(null, {nextSequenceToken: 'magic-token'});
-  }
+  };
 
-  CloudWatchLogsStub.prototype.describeLogStreams = describeLogStreamsStubDefault
+  CloudWatchLogsStub.prototype.describeLogStreams = describeLogStreamsStubDefault;
 
   return obj;
 }

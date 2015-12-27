@@ -25,7 +25,6 @@ var log = bunyan.createLogger({
 });
 
 describe('bunyan-cloudwatch e2e', function () {
-
   after(function (done) {
     cloudwatch.deleteLogGroup({
       logGroupName: logGroupName
@@ -44,7 +43,6 @@ describe('bunyan-cloudwatch e2e', function () {
     log.info({foo: 'bar'}, 'test log 4');
     readLogEventsUntilFound(4, done);
   });
-
 });
 
 function readLogEventsUntilFound(count, done) {
@@ -52,7 +50,7 @@ function readLogEventsUntilFound(count, done) {
     logGroupName: logGroupName,
     logStreamName: logStreamName
   };
-  cloudwatch.getLogEvents(params, function(err, data) {
+  cloudwatch.getLogEvents(params, function (err, data) {
     if (err) return readLogEventsUntilFound(count, done);
     if (data.events.length === count) return done();
     readLogEventsUntilFound(count, done);

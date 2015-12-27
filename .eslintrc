@@ -1,0 +1,12 @@
+{
+  "rules": {
+    "no-shadow": 0,
+    "no-console": 0,
+    "no-use-before-define": 0,
+    "comma-dangle": 0,
+    "vars-on-top": 0,
+    "func-names": 0,
+    "object-curly-spacing": [2, "never"]
+  },
+  "extends": "airbnb/legacy"
+}
