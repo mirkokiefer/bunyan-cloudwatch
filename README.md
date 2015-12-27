@@ -35,6 +35,7 @@ With `opts` of:
 - `logGroupName` (required)
 - `logStreamName` (required)
 - `region` (required): the AWS region e.g. `us-west-1`
+- `cloudWatchLogsOptions` (optional): options passed to the [`AWS.CloudWatchLogs`](http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/CloudWatchLogs.html#constructor-property) constructor
 
 On write of the first log, the module creates the logGroup and logStream if necessary.
 
