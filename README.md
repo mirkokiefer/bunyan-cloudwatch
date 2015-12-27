@@ -10,7 +10,7 @@ This is actually a plain [Node.js Writable](https://nodejs.org/api/stream.html#s
 var bunyan = require('bunyan');
 var createCWStream = require('bunyan-cloudwatch');
 
-var stream = bunyanCW({
+var stream = createCWStream({
   logGroupName: 'my-group',
   logStreamName: 'my-stream',
   cloudWatchLogsOptions: {
