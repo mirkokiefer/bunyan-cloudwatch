@@ -15,7 +15,6 @@ function CloudWatchStream(opts) {
   this.logGroupName = opts.logGroupName;
   this.logStreamName = opts.logStreamName;
   this.writeInterval = opts.writeInterval || 0;
-  AWS.config.update({region: opts.region});
 
   this.cloudwatch = new AWS.CloudWatchLogs(opts.cloudWatchLogsOptions);
   this.queuedLogs = [];

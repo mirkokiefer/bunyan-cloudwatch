@@ -4,16 +4,18 @@ var uuid = require('uuid');
 var bunyan = require('bunyan');
 var createCWStream = require('../');
 
-AWS.config.update({region: 'us-west-1'});
-var cloudwatch = new AWS.CloudWatchLogs();
+var region = 'us-west-1';
 var logGroupName = 'test-group-' + uuid.v4();
 var logStreamName = 'test-stream-' + uuid.v4();
 
 var cwStream = createCWStream({
   logGroupName: logGroupName,
   logStreamName: logStreamName,
-  region: 'us-west-1'
+  cloudWatchLogsOptions: {
+    region: region
+  }
 });
+
 var log = bunyan.createLogger({
   name: 'foo',
   streams: [
@@ -22,6 +24,10 @@ var log = bunyan.createLogger({
       type: 'raw'
     }
   ]
+});
+
+var cloudwatch = new AWS.CloudWatchLogs({
+  region: region
 });
 
 describe('bunyan-cloudwatch e2e', function () {
