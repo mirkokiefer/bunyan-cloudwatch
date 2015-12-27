@@ -23,16 +23,16 @@ function CloudWatchStream(opts) {
   this.writeQueued = false;
 }
 
-CloudWatchStream.prototype._write = function (record, _enc, cb) {
+CloudWatchStream.prototype._write = function _write(record, _enc, cb) {
   this.queuedLogs.push(record);
   if (!this.writeQueued) {
     this.writeQueued = true;
     setTimeout(this._writeLogs.bind(this), this.writeInterval);
   }
   cb();
-}
+};
 
-CloudWatchStream.prototype._writeLogs = function () {
+CloudWatchStream.prototype._writeLogs = function _writeLogs() {
   if (this.sequenceToken === null) {
     return this._getSequenceToken(this._writeLogs.bind(this));
   }
@@ -46,7 +46,7 @@ CloudWatchStream.prototype._writeLogs = function () {
   var obj = this;
   writeLog();
 
-  function writeLog () {
+  function writeLog() {
     obj.cloudwatch.putLogEvents(log, function (err, res) {
       if (err) {
         if (err.retryable) return setTimeout(writeLog, obj.writeInterval);
@@ -59,23 +59,24 @@ CloudWatchStream.prototype._writeLogs = function () {
       obj.writeQueued = false;
     });
   }
-}
+};
 
-CloudWatchStream.prototype._getSequenceToken = function (done) {
+CloudWatchStream.prototype._getSequenceToken = function _getSequenceToken(done) {
   var params = {
     logGroupName: this.logGroupName,
     logStreamNamePrefix: this.logStreamName
   };
   var obj = this;
-  this.cloudwatch.describeLogStreams(params, function(err, data) {
+  this.cloudwatch.describeLogStreams(params, function (err, data) {
     if (err) {
       if (err.name === 'ResourceNotFoundException') {
         createLogGroupAndStream(obj.cloudwatch, obj.logGroupName, obj.logStreamName, createStreamCb);
         return;
       }
-      return obj._error(err);
+      obj._error(err);
+      return;
     }
-    if (data.logStreams.length == 0) {
+    if (data.logStreams.length === 0) {
       createLogStream(obj.cloudwatch, obj.logGroupName, obj.logStreamName, createStreamCb);
       return;
     }
@@ -83,17 +84,17 @@ CloudWatchStream.prototype._getSequenceToken = function (done) {
     done();
   });
 
-  function createStreamCb(err, res) {
+  function createStreamCb(err) {
     if (err) return obj._error(err);
     // call again to verify stream was created - silently fails sometimes!
     obj._getSequenceToken(done);
   }
-}
+};
 
-CloudWatchStream.prototype._error = function (err) {
+CloudWatchStream.prototype._error = function _error(err) {
   if (this.onError) return this.onError(err);
   throw err;
-}
+};
 
 function createLogGroupAndStream(cloudwatch, logGroupName, logStreamName, cb) {
   cloudwatch.createLogGroup({
