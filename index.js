@@ -123,11 +123,3 @@ function createCWLog(bunyanLog) {
   };
   return log;
 }
-
-
-function BunyanCWError(message) {
-  this.name = 'BunyanCWError';
-  this.message = message || 'error in bunyan-cloudwatch';
-}
-BunyanCWError.prototype = Object.create(Error.prototype);
-BunyanCWError.prototype.constructor = BunyanCWError;
