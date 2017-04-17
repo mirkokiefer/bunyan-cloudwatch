@@ -49,6 +49,12 @@ CloudWatchStream.prototype._writeLogs = function _writeLogs() {
     obj.cloudwatch.putLogEvents(log, function (err, res) {
       if (err) {
         if (err.retryable) return setTimeout(writeLog, obj.writeInterval);
+        if (err.code === 'InvalidSequenceTokenException') {
+          return obj._getSequenceToken((function () {
+            log.sequenceToken = obj.sequenceToken;
+            setTimeout(writeLog, obj.writeInterval);
+          }));
+        }
         return obj._error(err);
       }
       obj.sequenceToken = res.nextSequenceToken;
