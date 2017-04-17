@@ -50,10 +50,10 @@ CloudWatchStream.prototype._writeLogs = function _writeLogs() {
       if (err) {
         if (err.retryable) return setTimeout(writeLog, obj.writeInterval);
         if (err.code === 'InvalidSequenceTokenException') {
-          return obj._getSequenceToken((function () {
+          return obj._getSequenceToken(function () {
             log.sequenceToken = obj.sequenceToken;
             setTimeout(writeLog, obj.writeInterval);
-          }));
+          });
         }
         return obj._error(err);
       }
