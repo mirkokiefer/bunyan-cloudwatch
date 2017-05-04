@@ -19,7 +19,8 @@
   "author": "Mirko Kiefer <mail@mirkokiefer.com>",
   "license": "MIT",
   "dependencies": {
-    "aws-sdk": "^2.1.33"
+    "aws-sdk": "^2.1.33",
+    "json-stringify-safe": "^5.0.1"
   },
   "devDependencies": {
     "bunyan": "^1.3.6",

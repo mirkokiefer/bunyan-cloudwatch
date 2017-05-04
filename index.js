@@ -2,6 +2,7 @@
 var util = require('util');
 var Writable = require('stream').Writable;
 var AWS = require('aws-sdk');
+var stringify = require('json-stringify-safe');
 
 module.exports = createCloudWatchStream;
 
@@ -124,7 +125,7 @@ function createCWLog(bunyanLog) {
     message[key] = bunyanLog[key];
   }
   var log = {
-    message: JSON.stringify(message),
+    message: stringify(message),
     timestamp: new Date(bunyanLog.time).getTime()
   };
   return log;
