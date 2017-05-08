@@ -29,9 +29,11 @@ var log = bunyan.createLogger({
 });
 ```
 
-To avoid raising exceptions when stringifying circular object logs, install the optional dependency 'safe-json-stringify'.
+To avoid raising exceptions when stringifying circular object logs, install the optional dependency ['safe-json-stringify'](https://github.com/debitoor/safe-json-stringify).
 
-##API
+Avoid logging from multiple sources to the same CloudWatch log stream. The module has a fallback by requesting the latest log sequence but this can result in a major performance decrease due to additional requests. It is recommended to e.g. add the machines IP address to the log stream name when logging from multiple instances.
+
+## API
 
 ### createCWStream(opts)
 With `opts` of:
@@ -43,7 +45,6 @@ With `opts` of:
 On write of the first log, the module creates the logGroup and logStream if necessary.
 
 We use the aws-sdk to write the logs - the AWS credentials have therefore to be configured using environment variables (`AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`).
-
 
 - [Configuring the aws-sdk](http://docs.aws.amazon.com/AWSJavaScriptSDK/guide/node-configuring.html)
 - [`CloudWatchLogs.putLogEvents`](http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/CloudWatchLogs.html#putLogEvents-property) is the method we use to write logs
