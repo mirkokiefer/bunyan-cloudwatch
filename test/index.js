@@ -236,6 +236,26 @@ describe('bunyan-cloudwatch', function () {
       done();
     }
   });
+
+  it('should not crash on circular log objects', function (done) {
+    awsStub.onLog = onLog;
+    var circularObj = {a: 1};
+    circularObj.circular = circularObj;
+    log.info(circularObj, 'test log 1');
+
+    function onLog(params) {
+      assert.equal(params.logGroupName, logGroupName);
+      assert.equal(params.logStreamName, logStreamName);
+      assert.equal(params.logEvents.length, 1);
+
+      var event1 = params.logEvents[0];
+      var message1 = JSON.parse(event1.message);
+      assert.equal(message1.msg, 'test log 1');
+      assert.equal(message1.circular.circular, '[Circular]');
+      assert.ok(event1.timestamp);
+      done();
+    }
+  });
 });
 
 function createAWSStub() {

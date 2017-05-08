@@ -29,7 +29,9 @@ var log = bunyan.createLogger({
 });
 ```
 
-## API
+To avoid raising exceptions when stringifying circular object logs, install the optional dependency 'safe-json-stringify'.
+
+##API
 
 ### createCWStream(opts)
 With `opts` of:

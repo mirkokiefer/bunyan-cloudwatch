@@ -21,12 +21,16 @@
   "dependencies": {
     "aws-sdk": "^2.1.33"
   },
+  "optionalDependencies": {
+    "safe-json-stringify": "^1.0.3"
+  },
   "devDependencies": {
     "bunyan": "^2.0.0",
     "eslint": "^1.10.3",
     "eslint-config-airbnb": "^2.1.1",
     "mocha": "^2.2.5",
     "proxyquire": "^1.5.0",
+    "safe-json-stringify": "^1.0.4",
     "sinon": "^1.14.1",
     "uuid": "^2.0.1"
   }
