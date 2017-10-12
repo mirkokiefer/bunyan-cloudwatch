@@ -2,7 +2,12 @@
 var util = require('util');
 var Writable = require('stream').Writable;
 var AWS = require('aws-sdk');
-var safeJsonStringify = require('safe-json-stringify');
+var safeJsonStringify;
+try {
+  safeJsonStringify = require('safe-json-stringify');
+} catch (err) {
+  safeJsonStringify = null;
+}
 
 var jsonStringify = safeJsonStringify ? safeJsonStringify : JSON.stringify;
 
